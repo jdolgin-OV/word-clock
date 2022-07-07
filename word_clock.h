@@ -66,6 +66,25 @@ uint8_t twelve[] = {78, 83};
 uint8_t oclock[] = {126, 131};
 uint8_t in[] = {142, 143};
 
+#define NUM_WIDTH 4
+#define NUM_HEIGHT 5
+
+bool nums[10][NUM_WIDTH][NUM_HEIGHT] = {
+  {{0, 1, 1, 1, 0}, {1, 0, 0, 0, 1}, {1, 0, 0, 0, 1}, {0, 1, 1, 1, 0}},
+  {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {1, 1, 1, 1, 1}, {0, 0, 0, 0, 0}},
+  {{1, 0, 1, 1, 1}, {1, 0, 1, 0, 1}, {1, 0, 1, 0, 1}, {1, 1, 1, 0, 1}},
+  {{1, 0, 1, 0, 1}, {1, 0, 1, 0, 1}, {1, 0, 1, 0, 1}, {1, 1, 1, 1, 1}},
+  {{1, 1, 1, 0, 0}, {0, 0, 1, 0, 0}, {0, 0, 1, 0, 0}, {1, 1, 1, 1, 1}},
+  {{1, 1, 1, 0, 1}, {1, 0, 1, 0, 1}, {1, 0, 1, 0, 1}, {1, 0, 1, 1, 1}},
+  {{1, 1, 1, 1, 1}, {1, 0, 1, 0, 1}, {1, 0, 1, 0, 1}, {1, 0, 1, 1, 1}},
+  {{1, 0, 0, 0, 0}, {1, 0, 0, 0, 0}, {1, 0, 0, 0, 0}, {1, 1, 1, 1, 1}},
+  {{1, 1, 1, 1, 1}, {1, 0, 1, 0, 1}, {1, 0, 1, 0, 1}, {1, 1, 1, 1, 1}},
+  {{1, 1, 1, 0, 1}, {1, 0, 1, 0, 1}, {1, 0, 1, 0, 1}, {1, 1, 1, 1, 1}},
+};
+
+bool dot = false;
+
+bool screen[mh][mw] = {0};
 //Show LED Rainbow animation
 void rainbow_show()
 {
@@ -87,7 +106,7 @@ void update_mode()
   {
     //Iterate mode
     clock_mode = (clock_mode + 1) % NUM_MODES;
-    change_mode = false;
+    change_mode = true;
     FastLED.clear();
     last_interrupt_time = interrupt_time;
   }
@@ -301,6 +320,103 @@ void show_word_time()
 
   FastLED.clear();
   show_time();
+  FastLED.show();
+}
+
+void show_digital_time()
+{
+  get_time();
+
+  if (digitalRead(HOUR_BUTTON))
+  {
+    //Update to the next hour
+    rtc.adjust(DateTime(now.year(), now.month(), now.day(), (now.hour() + 1) % 24, now.minute(), 0));
+    delay(500);
+    FastLED.clear();
+  }
+
+  if (digitalRead(MINUTE_BUTTON))
+  {
+    //Update to the next minute
+    rtc.adjust(DateTime(now.year(), now.month(), now.day(), now.hour(), (now.minute() + 1) % 60, 0));
+    delay(500);
+    FastLED.clear();
+  }
+
+  if (digitalRead(TIME_ZONE))
+  {
+    //Update time zone
+    time_zone_count = (time_zone_count + 1) % 3;
+    rtc.adjust(DateTime(now.year(), now.month(), now.day(), (now.hour() + time_zone_arr[time_zone_count]) % 24, now.minute(), 0));
+    delay(500);
+    FastLED.clear();
+  }
+
+  uint8_t minute_ones = minute % 10;
+  uint8_t minute_tens = minute / 10;
+  uint8_t hour_ones = (hour % 12) % 10;
+  uint8_t hour_tens = (hour % 12) / 10;
+
+  if(!hour_ones && !hour_tens)
+  {
+    hour_ones = 2;
+    hour_tens = 1;
+  }
+
+  EVERY_N_MILLISECONDS(1000)
+  {
+    dot = !dot;
+    CRGB color = CRGB(red, green, blue);
+    if(!dot)
+    {
+      color = CRGB(0, 0, 0);
+    }
+
+    uint8_t dot_address[][2] ={{13, 13}, {37, 37}};
+    set_leds(dot_address[0], color);
+    set_leds(dot_address[1], color);
+  }
+
+
+  for (uint8_t x = 0; x < NUM_WIDTH * LEDS_PER_COL; x++)
+  {
+    for (uint8_t y = 0; y < NUM_HEIGHT; y++)
+    {
+      if (nums[minute_ones][x / LEDS_PER_COL][y])
+      {
+        matrix->drawPixel(x + ((NUM_WIDTH + 1) * LEDS_PER_COL), y + (mh - NUM_HEIGHT), CRGB(red, green, blue));
+      }
+      else
+      {
+        matrix->drawPixel(x + ((NUM_WIDTH + 1) * LEDS_PER_COL), y + (mh - NUM_HEIGHT), CRGB(0, 0, 0));
+      }
+      if (nums[minute_tens][x / 4][y])
+      {
+        matrix->drawPixel(x, y + (mh - NUM_HEIGHT), CRGB(red, green, blue));
+      }
+      else
+      {
+        matrix->drawPixel(x, y + (mh - NUM_HEIGHT), CRGB(0, 0, 0));
+      }
+      if (nums[hour_ones][x / LEDS_PER_COL][y])
+      {
+        matrix->drawPixel(x + ((NUM_WIDTH + 1) * LEDS_PER_COL), y, CRGB(red, green, blue));
+      }
+      else
+      {
+        matrix->drawPixel(x + ((NUM_WIDTH + 1) * LEDS_PER_COL), y, CRGB(0, 0, 0));
+      }
+      if (nums[hour_tens][x / 4][y])
+      {
+        matrix->drawPixel(x, y, CRGB(red, green, blue));
+      }
+      else
+      {
+        matrix->drawPixel(x, y, CRGB(0, 0, 0));
+      }
+    }
+  }
+  
   FastLED.show();
 }
 

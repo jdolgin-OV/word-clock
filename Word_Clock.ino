@@ -85,9 +85,12 @@ void loop()
       show_word_time();
       break;
     case 2:
-      rainbow_show();
+      show_digital_time();
       break;
     case 3:
+      rainbow_show();
+      break;
+    case 4:
       ChangePalettePeriodically();
 
       static uint8_t startIndex = 0;
@@ -98,7 +101,7 @@ void loop()
       FastLED.show();
       FastLED.delay(1000 / UPDATES_PER_SECOND);
       break;
-    case 4:
+    case 5:
       scroll_text(text);
       break;
     default:
@@ -182,7 +185,7 @@ void show_IP()
     FastLED.show();
     delay(1000);
     FastLED.clear();
-    delay(100);
+    delay(500);
   }
 }
 
