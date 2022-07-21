@@ -32,8 +32,10 @@ void setup() {
 
   //When the mode button is pressed call update mode
   attachInterrupt(digitalPinToInterrupt(MODE_BUTTON), update_mode, HIGH);
+  //show omers logo while connecting to wifi
   show_image(OMERS_LOGO);
 
+  //set up web server and show start animations
   setupWebServer();
   FastLED.clear();
   start();
@@ -42,6 +44,7 @@ void setup() {
 
 void loop()
 {
+  //if auto change, change modes every 10 seconds
   if (auto_change)
   {
     EVERY_N_MILLISECONDS(10000)
@@ -49,12 +52,16 @@ void loop()
       update_mode();
     }
   }
+  //readjust brightness
   FastLED.setBrightness(brightness);
 
+  //if motion detected adjust time last sensed
   current_time = millis();
   if (digitalRead(PIR_PIN))
     time_since_last_wake = millis();
 
+  //if time since last wake occured more than sleep time long ago
+  //clear leds and wait for motion
   while (current_time - time_since_last_wake > SLEEP_TIME)
   {
     current_time = millis();
@@ -67,6 +74,7 @@ void loop()
     FastLED.show();
   }
 
+  //if the mode was changed clear the LEDS
   if (change_mode)
   {
     Serial.println("Changed");
@@ -76,6 +84,7 @@ void loop()
     change_mode = false;
   }
 
+  //for color fading animations fade the hue every 10 ms
   EVERY_N_MILLISECONDS(10)
   {
     hue = (hue + 1) % 255;
@@ -118,20 +127,20 @@ void loop()
 
 void show_IP()
 {
+  //turn ip address to string
   IPAddress ip = WiFi.localIP();
   String ip_address = ip.toString();
   Serial.println(ip_address);
 
   FastLED.clear();
   uint8_t dot[] = {123, 125};
-
+  
   for (uint8_t i = 0; i < ip_address.length(); i++)
   {
     uint8_t ip[] = {7, 8};
     set_leds(ip, CRGB(red, green, blue));
-
+    //show ip
     char c = ip_address.charAt(i);
-
     if (c == '.')
     {
       set_leds(dot, CRGB(red, green, blue));
@@ -140,6 +149,7 @@ void show_IP()
     else
     {
       c = c - 48;
+      //subtract from ascii value so c = num to display
       switch (c)
       {
         case 1:
@@ -207,9 +217,11 @@ void start()
   uint8_t temp_brightness = brightness;
   int8_t sign = -1;
 
+  //for 5s breathe leds to reveal omers clock, jd, cr
   while (new_time - start_time <= 5000)
   {
     new_time = millis();
+    //every ms fade brightness
     EVERY_N_MILLISECONDS(1)
     {
       if (temp_brightness == 0)
@@ -222,6 +234,7 @@ void start()
       }
       temp_brightness += sign;
     }
+ 
     FastLED.setBrightness(temp_brightness);
     uint8_t omers[5] = {10, 13, 34, 37, 58};
     draw_vert(omers, 5);

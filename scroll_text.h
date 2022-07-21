@@ -109,6 +109,7 @@ bool font[95][CHAR_WIDTH][CHAR_HEIGHT] PROGMEM =  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 
   {{0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0}} //~
 };
 
+//array of colors that show the omers logo array[x][y] is the color shown in box [x][y] starting in top left corner
 uint32_t OMERS_LOGO[mh][mw / LEDS_PER_COL] PROGMEM = {{0xffffff, 0xffffff, 0xffffff, 0xffffff, 0x213fff,  0x213fff,  0x213fff, 0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xffffff},
   {0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xffffff, 0x213fff, 0x213fff, 0x213fff, 0xffffff, 0xffffff, 0xffffff},
   {0xffffff, 0xffffff, 0xe37419, 0xe37419, 0xe37419, 0xffffff, 0xffffff, 0x213fff, 0x213fff, 0x213fff, 0xffffff, 0xffffff},
@@ -135,8 +136,9 @@ uint32_t CASEY[mh][mw / LEDS_PER_COL] PROGMEM = {{0x49514b, 0x4e3523, 0xc98e66, 
 {0x475753, 0x2d3029, 0x604831, 0x3b2a19, 0x413020, 0x876246, 0x8d6549, 0x4e3625, 0x85634a, 0x464843, 0x374441, 0x3b4845}, 
 {0x1c231e, 0x1f1f1d, 0x614a39, 0x765739, 0x44311d, 0x372515, 0x442e1b, 0x946f51, 0xc39371, 0x484142, 0x363d3c, 0x3b443f}};
 
-void loadBuffer(uint8_t value) {  //Loads ASCII value from string to back buffer
-  //load a space 
+//load buffer character
+void loadBuffer(uint8_t value) {  
+  //load a space, adjust if less LEDS per col are used
   for (uint8_t j = 0; j < CHAR_HEIGHT; j++)
   {
     backBuffer[0][j] = 0;
@@ -145,6 +147,7 @@ void loadBuffer(uint8_t value) {  //Loads ASCII value from string to back buffer
     backBuffer[3][j] = 0;
   }
 
+  //load character
   for (uint8_t i = 0; i < (CHAR_WIDTH - OFFSET) * 4; i++)
   {
     for (uint8_t j = 0; j < CHAR_HEIGHT; j++)
@@ -156,6 +159,7 @@ void loadBuffer(uint8_t value) {  //Loads ASCII value from string to back buffer
 
 void load_leds()
 {
+  //take toDisplay and draw the pixels 
   for (uint8_t x = 0; x < NUM_COLS; x++)
   {
     for (uint8_t y = 0; y < CHAR_HEIGHT; y ++)
@@ -174,9 +178,10 @@ void load_leds()
 
 void scroll()
 {
+  //shift out an entire letter, OFFSET scrolls less so that there isnt a bigger space between lowercase letters
   for (uint8_t shift = 0; shift < (CHAR_WIDTH - OFFSET) * 4 + 4; shift++)
   {
-
+    //move everything over one col
     for (uint8_t i = 1; i < NUM_COLS; i++)
     {
       for (uint8_t j = 0; j < CHAR_HEIGHT; j++)
@@ -185,14 +190,15 @@ void scroll()
         backBuffer[i - 1][j] = backBuffer[i][j];
       }
     }
-
+    //move one col from back buffer 
     for (uint8_t j = 0; j < CHAR_HEIGHT; j++)
     {
       toDisplay[NUM_COLS - 1][j] = backBuffer[0][j];
       backBuffer[NUM_COLS - 1][j] = 0;
     }
-
+    
     load_leds();
+    //every 4 scrolls show it, not sure why the 2 is needed...
     if ((shift % 4) - 2 == 0)
     {
       matrix->show();
@@ -203,14 +209,16 @@ void scroll()
 
 void scroll_text(String message)
 {
-
+  //add a space buffer to the back of the message
   message = message + "  ";
 
   matrix->setBrightness(brightness);
   uint8_t value = message.charAt(pointer);
   value = value - 32;
+  //adjust ascii value to array pointer
   if (value >= 65 && value <= 90)
   {
+    //if lowercase change offset
     OFFSET = DIFF_LOWERCASE;
   }
   else
@@ -219,6 +227,7 @@ void scroll_text(String message)
   }
   loadBuffer(value);
   scroll();
+  //move pointer
   pointer = (pointer + 1) % message.length(); //Increment pointer, pointer =< message length
 }
 

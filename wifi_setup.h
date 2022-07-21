@@ -122,6 +122,7 @@ const char index_html[] PROGMEM = R"rawliteral(
   function onMessage(event) {
     var dataType = event.data.charAt(0);
     var dataValue = event.data.substring(1);
+    //get the dataType
     switch (dataType){
     case 's':
       document.getElementById('speedValue').innerHTML = dataValue;
@@ -153,7 +154,8 @@ const char index_html[] PROGMEM = R"rawliteral(
 </html>
 )rawliteral";
 
-uint8_t brightness = 200;
+//the data being modified by the site
+uint8_t brightness = 175;
 unsigned long red = 255;
 unsigned long green = 255;
 unsigned long blue = 255;
@@ -162,10 +164,12 @@ String text = "Welcome to OMERS Ventures";
 uint16_t scroll_speed = 250;
 uint8_t pointer = 0;    //8 bit pointer to character in message
 
+//number of modes
 uint8_t clock_mode = 0;
 #define NUM_MODES 7
 bool change_mode = false;
 
+//whether to auto change modes
 bool auto_change = false;
 
 String col = "";
@@ -173,10 +177,10 @@ String col = "";
 //Interrupt routine to update the clock mode
 void update_mode()
 {
-  //DIY button debounce, only interrupt every 500 ms
+  //DIY button debounce, only interrupt every 1000 ms
   static unsigned long last_interrupt_time = 0;
   unsigned long interrupt_time = millis();
-  if (interrupt_time - last_interrupt_time > 500)
+  if (interrupt_time - last_interrupt_time > 1000)
   {
     //Iterate mode
     clock_mode = (clock_mode + 1) % NUM_MODES;
@@ -186,6 +190,7 @@ void update_mode()
   }
 }
 
+
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   AwsFrameInfo *info = (AwsFrameInfo*)arg;
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
@@ -194,11 +199,11 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     String message = String((char*)data);
     char dataType = message.charAt(0);
     String dataValue = message.substring(1);
-
+    //based on the character adjust the right variables
     switch (dataType) {
       case 's':
       {
-                scroll_speed = 510 - dataValue.toInt();
+        scroll_speed = 510 - dataValue.toInt();
         ws.textAll(message);
         break;
       }
@@ -210,6 +215,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
       }
       case 'c':
       {
+        //break hex color value into each band
         col = dataValue + " ";
         String subRed = col.substring(1, 3);
         String subGreen = col.substring(3, 5);
@@ -223,6 +229,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
       }
       case 'm':
       {
+        //if user enters text readjust pointer
         text = dataValue;
         pointer = 0;
         ws.textAll(message);
@@ -270,7 +277,8 @@ void initWebSocket() {
 String processor(const String& var){
   if(var == "SPEEDVALUE"){
     return String(scroll_speed);
-  }  if(var == "BRIGHTNESSVALUE"){
+  }  
+  if(var == "BRIGHTNESSVALUE"){
     return String(brightness);
   }
   if(var == "FAVCOLORVALUE"){

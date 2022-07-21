@@ -1,6 +1,8 @@
 #ifndef _color_H
 #define _color_H
 
+//adapted version of FastLED example color_pallet.ino
+
 #include "wifi_setup.h"
 
 //Include LED libraries
@@ -18,7 +20,7 @@
 #define LED_TYPE    WS2812
 #define COLOR_ORDER GRB
 #define NUM_LEDS 48 * 12
-#define MAX_POWER_MILLIAMPS 7500
+#define MAX_POWER_MILLIAMPS 6000
 CRGB leds[NUM_LEDS];            // Create LED Object
 //LED data
 #define LEDS_PER_COL 4
