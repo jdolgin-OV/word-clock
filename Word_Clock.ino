@@ -1,20 +1,15 @@
 #include "word_clock.h"
-#include "scroll_text.h"
-#include "soc/soc.h"
-#include "soc/rtc_cntl_reg.h"
 
 void setup() {
   //Initialize Serial monitor with power up safety delay
   Serial.begin(9600);
   delay(2000);
 
-  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
 
   //Initialize LEDs
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip ); //Initialize LED strips
   FastLED.setBrightness(brightness);
   FastLED.setMaxPowerInVoltsAndMilliamps(5, MAX_POWER_MILLIAMPS);
-  FastLED.clear();
   matrix->begin();
 
   // Start the I2C interface
@@ -27,7 +22,7 @@ void setup() {
     while (1) delay(10);
   }
   //Adjust to current date time
-  rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
 
   pinMode(HOUR_BUTTON, INPUT);
   pinMode(MINUTE_BUTTON, INPUT);
@@ -37,15 +32,23 @@ void setup() {
 
   //When the mode button is pressed call update mode
   attachInterrupt(digitalPinToInterrupt(MODE_BUTTON), update_mode, HIGH);
+  show_image(OMERS_LOGO);
 
   setupWebServer();
-
+  FastLED.clear();
   start();
 
 }
 
 void loop()
 {
+  if (auto_change)
+  {
+    EVERY_N_MILLISECONDS(10000)
+    {
+      update_mode();
+    }
+  }
   FastLED.setBrightness(brightness);
 
   current_time = millis();
@@ -69,7 +72,7 @@ void loop()
     Serial.println("Changed");
     FastLED.clear();
     FastLED.show();
-    delay(50);
+    FastLED.delay(50);
     change_mode = false;
   }
 
@@ -102,6 +105,9 @@ void loop()
       FastLED.delay(1000 / UPDATES_PER_SECOND);
       break;
     case 5:
+      weather_display();
+      break;
+    case 6:
       scroll_text(text);
       break;
     default:
@@ -183,20 +189,25 @@ void show_IP()
       }
     }
     FastLED.show();
-    delay(1000);
+    FastLED.delay(1000);
+
     FastLED.clear();
-    delay(500);
+    set_leds(ip, CRGB(red, green, blue));
+    FastLED.delay(500);
   }
 }
 
 void start()
 {
+  FastLED.clear();
+
+
   unsigned long start_time = millis();
   unsigned long new_time = millis();
   uint8_t temp_brightness = brightness;
   int8_t sign = -1;
 
-  while (new_time - start_time <= 15000)
+  while (new_time - start_time <= 5000)
   {
     new_time = millis();
     EVERY_N_MILLISECONDS(1)

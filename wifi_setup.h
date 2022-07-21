@@ -4,14 +4,15 @@
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-#define NUM_ATTEMPTS 1
+#include <FastLED.h>
+#define NUM_ATTEMPTS 5
 
-const char* ssid = "BELL811";
-const char* password = "jjma1234";
+const char* ssid = "Josh iPhone";
+const char* password = "1553church";
 
 // Replace with your secondary network credentials
-const char* ssid2 = "Josh iPhone";
-const char* password2 = "1553church";
+const char* ssid2 = "";
+const char* password2 = "";
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
@@ -45,38 +46,56 @@ const char index_html[] PROGMEM = R"rawliteral(
 
 <body>
   <h2>Omers WordClock</h2>
-  <button type="button" id="nextBtn" onclick="sendData('n',1)" >Next pattern</button>
-
-  </br></br>
-  <table border="0">
-  <tr>
-</br>
-  <label id="labelMessage" for="message">Message: </label>
-  <input id="message" type="text" onchange="sendData('m',this.value)" value="%MESSAGE%">
-  <br>
-  <label id="labelSpeed" for="speedSlider">Speed: </label>
-   <input type="range" id="speedSlider" onchange="sendData('s',this.value)" min="0" max="500" value="%SPEEDVALUE%" step="1" class="slider">
-  </br>
-  </form><br>
   
-    <td class="labelCol"><label id="labelBrightness" for="brightnessSlider">Brightness</label></td>
-    <td><input type="range" id="brightnessSlider" onchange="sendData('t',this.value)" min="0" max="255" value="200" step="1" class="slider"></td>
-    <td class="valCol"><span id="brightnessValue">%BRIGHTNESSVALUE%</span></td>
-  </tr><tr>
-    <td class="sliderCol"><label id="labelRed" for="redSlider">Red</label></td>
-    <td><input type="range" id="Red" onchange="sendData('r',this.value)" min="0" max="255" value="255" step="1" class="slider"></td>
-    <td class="valCol"><span id="redValue">%REDVALUE%</span></td>
-  </tr> <tr>
-    <td class="labelRow"><label id="labelGreen" for="greenSlider">Green</label></td>
-    <td><input type="range" id="greenSlider" onchange="sendData('g',this.value)" min="0" max="255" value="255" step="1" class="slider"></td>
-    <td class="valCol"><span id="greenValue">%GREENVALUE%</span></td>
-  </tr><tr>
-    <td class="labelRow"><label id="labelBlue" for="blueSlider">Blue</label></td>
-    <td><input type="range" id="blueSlider" onchange="sendData('b',this.value)" min="0" max="255" value="255" step="1" class="slider"></td>
-    <td class="valCol"><span id="blueValue">%BLUEVALUE%</span></td>
-  </tr> 
-    
+  <table>
+      <tr>
+        <td>
+            <button type="button" id="nextBtn" onclick="sendData('a',1)" >Auto Change</button>
+        </td>
+        <td>
+            <button type="button" id="nextBtn" onclick="sendData('n',1)" >   Next Pattern   </button>
+        </td>
+    </tr>
+</table>
+  <table>
+     <tr>
+        <td>
+            <form action="/action_page.php">
+             <label for="favcolor">Select color:</label>
+        </td>
+         <td>  
+             <input type="color" id="favcolor" name="favcolor" value="FAVCOLORVALUE" onChange="sendData('c', this.value)">
+             </form>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label id="labelMessage" for="message">Message: </label>
+        </td>
+        <td>
+            <input id="message" type="text" onchange="sendData('m',this.value)" value="%MESSAGE%">
+       </td>
+   </tr>
+   <tr>
+       <td>
+           <label id="labelSpeed" for="speedSlider">Speed: </label>
+       </td>
+       <td> 
+           <input type="range" id="speedSlider" onchange="sendData('s',this.value)" min="0" max="500" value="%SPEEDVALUE%" step="1" class="slider"> 
+       </td>
+   </tr>
+   <tr>
+       <td> 
+          <label id="labelBrightness" for="brightnessSlider">Brightness: </label>
+       </td>
+       <td>
+       <input type="range" id="brightnessSlider" onchange="sendData('t',this.value)" min="0" max="255" value="200" step="1" class="slider">
+       </td>
+  </form>
+  </tr>
   </table>
+<br>
+  
 <script>
  var gateway = `ws://${window.location.hostname}/ws`;
   var websocket;
@@ -98,7 +117,8 @@ const char index_html[] PROGMEM = R"rawliteral(
     console.log('Connection closed');
     setTimeout(initWebSocket, 2000);
   }
-  
+
+
   function onMessage(event) {
     var dataType = event.data.charAt(0);
     var dataValue = event.data.substring(1);
@@ -111,17 +131,8 @@ const char index_html[] PROGMEM = R"rawliteral(
       document.getElementById('brightnessValue').innerHTML = dataValue;
       document.getElementById('brightnessSlider').value = dataValue;
       break;
-    case 'r':
-      document.getElementById('redValue').innerHTML = dataValue;
-      document.getElementById('redSlider').value = dataValue;
-      break;
-    case 'g':
-      document.getElementById('greenValue').innerHTML = dataValue;
-      document.getElementById('greenSlider').value = dataValue;
-      break;
-    case 'b':
-      document.getElementById('blueValue').innerHTML = dataValue;
-      document.getElementById('blueSlider').value = dataValue;
+    case 'c':
+      document.getElementById('color').innerHTML = dataValue;
       break;
     case 'm':
       document.getElementById('message').innerHTML = dataValue;
@@ -136,24 +147,44 @@ const char index_html[] PROGMEM = R"rawliteral(
     console.log(type+val);
     websocket.send(type+val);
   }
+
 </script>
 </body>
 </html>
 )rawliteral";
 
 uint8_t brightness = 200;
-uint8_t red = 255;
-uint8_t green = 255;
-uint8_t blue = 255;
-//String text = "Welcome to OMERS Venture Capital";
-String text = "!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVQXYZ[\]^_`abdefghijklmnopqrstuvwxyz{|}~";
+unsigned long red = 255;
+unsigned long green = 255;
+unsigned long blue = 255;
+String text = "Welcome to OMERS Ventures";
+//String text = "!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVQXYZ[\]^_`abdefghijklmnopqrstuvwxyz{|}~";
 uint16_t scroll_speed = 250;
 uint8_t pointer = 0;    //8 bit pointer to character in message
 
 uint8_t clock_mode = 0;
-#define NUM_MODES 5
+#define NUM_MODES 7
 bool change_mode = false;
 
+bool auto_change = false;
+
+String col = "";
+
+//Interrupt routine to update the clock mode
+void update_mode()
+{
+  //DIY button debounce, only interrupt every 500 ms
+  static unsigned long last_interrupt_time = 0;
+  unsigned long interrupt_time = millis();
+  if (interrupt_time - last_interrupt_time > 500)
+  {
+    //Iterate mode
+    clock_mode = (clock_mode + 1) % NUM_MODES;
+    change_mode = true;
+    FastLED.clear();
+    last_interrupt_time = interrupt_time;
+  }
+}
 
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   AwsFrameInfo *info = (AwsFrameInfo*)arg;
@@ -166,34 +197,47 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
 
     switch (dataType) {
       case 's':
-        scroll_speed = 510 - dataValue.toInt();
+      {
+                scroll_speed = 510 - dataValue.toInt();
         ws.textAll(message);
         break;
+      }
       case 't':
+      {
         brightness = dataValue.toInt();
         ws.textAll(message);
         break;
-      case 'r':
-        red = dataValue.toInt();
+      }
+      case 'c':
+      {
+        col = dataValue + " ";
+        String subRed = col.substring(1, 3);
+        String subGreen = col.substring(3, 5);
+        String subBlue = col.substring(5, 7);
+        red = strtoul(subRed.c_str(), NULL, 16);
+        green = strtoul(subGreen.c_str(), NULL, 16);
+        blue = strtoul(subBlue.c_str(), NULL, 16);
+        ws.textAll(message);
         ws.textAll(message);
         break;
-      case 'g':
-        green = dataValue.toInt();
-        ws.textAll(message);
-        break;
-      case 'b':
-        blue = dataValue.toInt();
-        ws.textAll(message);
-        break;
+      }
       case 'm':
+      {
         text = dataValue;
         pointer = 0;
         ws.textAll(message);
         break;
+      }
       case 'n':
-        clock_mode = (clock_mode + 1) % NUM_MODES;
-        bool change_mode = true;
+      {
+        update_mode();  
         break;
+      }
+      case 'a':
+      {
+        auto_change = !auto_change;
+        break;
+      }
     }
   }
 }
@@ -229,14 +273,8 @@ String processor(const String& var){
   }  if(var == "BRIGHTNESSVALUE"){
     return String(brightness);
   }
-  if(var == "REDVALUE"){
-    return String(red);
-  }
-  if(var == "GREENVALUE"){
-    return String(green);
-  }
-    if(var == "BLUEVALUE"){
-    return String(blue);
+  if(var == "FAVCOLORVALUE"){
+    return col;
   }
     if(var == "Message"){
     return text;
@@ -256,8 +294,8 @@ void setupWebServer(){
     if (connectionAttempts > NUM_ATTEMPTS) break;    
   }
 
+  WiFi.begin(ssid2, password2);
   while (WiFi.status() != WL_CONNECTED) {
-    WiFi.begin(ssid2, password2);
     delay (1000);
     Serial.println("Connecting to secondary WiFi ...");
     connectionAttempts++;

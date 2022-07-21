@@ -3,6 +3,7 @@
 
 //Include the color pallet animations
 #include "colorPallet.h"
+#include "scroll_text.h"
 
 //RTC libraries
 #include <RTClib.h>
@@ -13,8 +14,6 @@ RTC_DS3231 rtc;
 uint8_t hour, minute, second;
 DateTime now;
 
-//LED data
-#define LEDS_PER_COL 4
 
 int hue = 0;
 
@@ -35,7 +34,7 @@ uint8_t time_zone_leds[][2] = {{138, 140}, {136, 137}, {132, 134}};
 //Use for automatic sleep timer
 unsigned long time_since_last_wake = 0;
 unsigned long current_time = millis();
-#define SLEEP_TIME 720000
+#define SLEEP_TIME 7200000
 
 uint8_t it[] = {0, 1};
 uint8_t is[] = {3, 4};
@@ -96,21 +95,7 @@ void rainbow_show()
   FastLED.show();
 }
 
-//Interrupt routine to update the clock mode
-void update_mode()
-{
-  //DIY button debounce, only interrupt every 500 ms
-  static unsigned long last_interrupt_time = 0;
-  unsigned long interrupt_time = millis();
-  if (interrupt_time - last_interrupt_time > 500)
-  {
-    //Iterate mode
-    clock_mode = (clock_mode + 1) % NUM_MODES;
-    change_mode = true;
-    FastLED.clear();
-    last_interrupt_time = interrupt_time;
-  }
-}
+
 
 //Given an array of LED addresses, light up the LEDs the given color
 void set_leds(uint8_t led_address[], CRGB color)
@@ -297,7 +282,7 @@ void show_word_time()
   {
     //Update to the next hour
     rtc.adjust(DateTime(now.year(), now.month(), now.day(), (now.hour() + 1) % 24, now.minute(), 0));
-    delay(500);
+    FastLED.delay(500);
     FastLED.clear();
   }
 
@@ -305,7 +290,7 @@ void show_word_time()
   {
     //Update to the next minute
     rtc.adjust(DateTime(now.year(), now.month(), now.day(), now.hour(), (now.minute() + 1) % 60, 0));
-    delay(500);
+    FastLED.delay(500);
     FastLED.clear();
   }
 
@@ -314,7 +299,7 @@ void show_word_time()
     //Update time zone
     time_zone_count = (time_zone_count + 1) % 3;
     rtc.adjust(DateTime(now.year(), now.month(), now.day(), (now.hour() + time_zone_arr[time_zone_count]) % 24, now.minute(), 0));
-    delay(500);
+    FastLED.delay(500);
     FastLED.clear();
   }
 
@@ -331,7 +316,7 @@ void show_digital_time()
   {
     //Update to the next hour
     rtc.adjust(DateTime(now.year(), now.month(), now.day(), (now.hour() + 1) % 24, now.minute(), 0));
-    delay(500);
+    FastLED.delay(500);
     FastLED.clear();
   }
 
@@ -339,7 +324,7 @@ void show_digital_time()
   {
     //Update to the next minute
     rtc.adjust(DateTime(now.year(), now.month(), now.day(), now.hour(), (now.minute() + 1) % 60, 0));
-    delay(500);
+    FastLED.delay(500);
     FastLED.clear();
   }
 
@@ -348,7 +333,7 @@ void show_digital_time()
     //Update time zone
     time_zone_count = (time_zone_count + 1) % 3;
     rtc.adjust(DateTime(now.year(), now.month(), now.day(), (now.hour() + time_zone_arr[time_zone_count]) % 24, now.minute(), 0));
-    delay(500);
+    FastLED.delay(500);
     FastLED.clear();
   }
 
@@ -357,7 +342,7 @@ void show_digital_time()
   uint8_t hour_ones = (hour % 12) % 10;
   uint8_t hour_tens = (hour % 12) / 10;
 
-  if(!hour_ones && !hour_tens)
+  if (!hour_ones && !hour_tens)
   {
     hour_ones = 2;
     hour_tens = 1;
@@ -367,12 +352,12 @@ void show_digital_time()
   {
     dot = !dot;
     CRGB color = CRGB(red, green, blue);
-    if(!dot)
+    if (!dot)
     {
       color = CRGB(0, 0, 0);
     }
 
-    uint8_t dot_address[][2] ={{13, 13}, {37, 37}};
+    uint8_t dot_address[][2] = {{13, 13}, {37, 37}};
     set_leds(dot_address[0], color);
     set_leds(dot_address[1], color);
   }
@@ -416,8 +401,191 @@ void show_digital_time()
       }
     }
   }
-  
+
   FastLED.show();
 }
+
+uint8_t frequency = random(1, 30);                                       // controls the interval between strikes
+#define FALL_SPEED 200
+
+const uint32_t RAIN = 0x006af5;
+const uint32_t CLOUD = 0x7F7F7F;
+const uint32_t LIGHTNING = 0xffee00;
+const uint32_t BLACK = 0x000000;
+uint8_t lightning_lengths[5] = {0, 4, 7, 10, 13};
+
+uint32_t weather[mh][mw / LEDS_PER_COL] PROGMEM = {{BLACK, CLOUD, CLOUD, CLOUD, BLACK,  BLACK,  BLACK, BLACK, CLOUD, CLOUD, CLOUD, BLACK},
+  {CLOUD, CLOUD, CLOUD, CLOUD, CLOUD,  BLACK,  BLACK, CLOUD, CLOUD, CLOUD, CLOUD, CLOUD},
+  {BLACK, BLACK, BLACK, BLACK, BLACK,  BLACK,  BLACK, BLACK, BLACK, BLACK, BLACK, BLACK},
+  {BLACK, BLACK, BLACK, BLACK, BLACK,  BLACK,  BLACK, BLACK, BLACK, BLACK, BLACK, BLACK},
+  {BLACK, BLACK, BLACK, BLACK, BLACK,  BLACK,  BLACK, BLACK, BLACK, BLACK, BLACK, BLACK},
+  {BLACK, BLACK, BLACK, BLACK, BLACK,  BLACK,  BLACK, BLACK, BLACK, BLACK, BLACK, BLACK},
+  {BLACK, BLACK, BLACK, BLACK, BLACK,  BLACK,  BLACK, BLACK, BLACK, BLACK, BLACK, BLACK},
+  {BLACK, BLACK, BLACK, BLACK, BLACK,  BLACK,  BLACK, BLACK, BLACK, BLACK, BLACK, BLACK},
+  {BLACK, BLACK, BLACK, BLACK, BLACK,  BLACK,  BLACK, BLACK, BLACK, BLACK, BLACK, BLACK},
+  {BLACK, BLACK, BLACK, BLACK, BLACK,  BLACK,  BLACK, BLACK, BLACK, BLACK, BLACK, BLACK},
+  {BLACK, BLACK, BLACK, BLACK, BLACK,  BLACK,  BLACK, BLACK, BLACK, BLACK, BLACK, BLACK},
+  {BLACK, BLACK, BLACK, BLACK, BLACK,  BLACK,  BLACK, BLACK, BLACK, BLACK, BLACK, BLACK}
+};
+
+void clear_display()
+{
+  for (uint8_t i = mh - 1; i >= 2; i--)
+  {
+    for (uint8_t j = 0; j < mw / LEDS_PER_COL; j++)
+    {
+      weather[i][j] = BLACK;
+    }
+  }
+}
+
+
+void show_lightning()
+{
+  uint8_t ptr = random(0, 5);
+  uint8_t right_length = lightning_lengths[ptr];
+  //  Serial.println("right ptr: ");
+  //  Serial.println(ptr);
+  //  Serial.println("length: ");
+  //  Serial.println(lightning_lengths[ptr]);
+
+  ptr = random(0, 5);
+  uint8_t left_length = lightning_lengths[ptr];
+  //  Serial.println("left ptr: ");
+  //  Serial.println(ptr);
+
+  clear_display();
+
+  uint8_t right_x = 9;
+  int8_t right_sign = -1;
+  if (random(0, 2))
+  {
+    right_sign = 1;
+  }
+
+  uint8_t left_x = 2;
+  int8_t left_sign = -1;
+  if (random(0, 2))
+  {
+    left_sign = 1;
+  }
+
+  uint8_t curr_right_length = 0;
+  uint8_t curr_left_length = 0;
+
+  for (uint8_t y = 2; y < mh - 1; y++)
+  {
+    if (curr_right_length < right_length)
+    {
+      if (y % 2 == 1)
+      {
+        weather[y][right_x] = LIGHTNING;
+        curr_right_length++;
+
+        weather[y][right_x + right_sign] = LIGHTNING;
+        curr_right_length++;
+
+        right_x += right_sign;
+        right_sign *= -1;
+      }
+      else
+      {
+
+        weather[y][right_x] = LIGHTNING;
+        curr_right_length++;
+      }
+    }
+
+    if (curr_left_length < left_length)
+    {
+      if (y % 2 == 1)
+      {
+        weather[y][left_x] = LIGHTNING;
+        curr_left_length++;
+
+        weather[y][left_x + left_sign] = LIGHTNING;
+        curr_left_length++;
+
+        left_x += left_sign;
+        left_sign *= -1;
+      }
+      else
+      {
+        weather[y][left_x] = LIGHTNING;
+        curr_left_length++;
+      }
+    }
+  }
+
+  show_image(weather);
+  delay(random(1, 8) * 100);
+  clear_display();
+  show_image(weather);
+}
+
+void weather_display() {
+  // put your main code here, to run repeatedly:
+  randomSeed(analogRead(3));
+  EVERY_N_MILLISECONDS(1000 * frequency)
+  {
+    frequency = random(1, 61);
+    Serial.println(frequency);
+    show_lightning();
+  }
+
+
+  EVERY_N_MILLISECONDS(2 * FALL_SPEED)
+  {
+    uint8_t col = 0;
+    bool added = false;
+
+    col = random(0, 5);
+    if (weather[3][col] != RAIN)
+    {
+      weather[2][col] = RAIN;
+      added = true;
+    }
+
+    col = random(7, 12);
+    if (weather[3][col] != RAIN)
+    {
+      weather[2][col] = RAIN;
+      added = true;
+    }
+
+    if (added)
+    {
+      for (uint8_t i = mh - 1; i >= 3; i--)
+      {
+        for (uint8_t j = 0; j < mw / LEDS_PER_COL; j++)
+        {
+          if (weather[i][j] == RAIN)
+          {
+            weather[i][j] = BLACK;
+            weather[i + 1][j] = RAIN;
+          }
+        }
+      }
+      show_image(weather);
+      delay(FALL_SPEED);
+    }
+  }
+
+  for (uint8_t i = mh - 1; i >= 2; i--)
+  {
+    for (uint8_t j = 0; j < mw / LEDS_PER_COL; j++)
+    {
+      if (weather[i][j] == RAIN)
+      {
+        weather[i][j] = BLACK;
+        weather[i + 1][j] = RAIN;
+      }
+    }
+  }
+
+  show_image(weather);
+  delay(FALL_SPEED);
+}
+
 
 #endif

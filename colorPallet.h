@@ -12,14 +12,16 @@
 #define mw 48
 #define mh 12
 
-//Various LED definitions 
-#define UPDATES_PER_SECOND 200
+//Various LED definitions
+#define UPDATES_PER_SECOND 60
 #define LED_PIN     14
 #define LED_TYPE    WS2812
 #define COLOR_ORDER GRB
 #define NUM_LEDS 48 * 12
 #define MAX_POWER_MILLIAMPS 7500
 CRGB leds[NUM_LEDS];            // Create LED Object
+//LED data
+#define LEDS_PER_COL 4
 
 //Matrix Definition, define starting LED corner, whether LEDS are horz rows or vert col
 FastLED_NeoMatrix *matrix = new FastLED_NeoMatrix(leds, mw, mh,
@@ -77,14 +79,14 @@ void ChangePalettePeriodically()
     }
     if ( secondHand == 15)  {
       currentPalette = RainbowStripeColors_p;
-      currentBlending = LINEARBLEND;
+      currentBlending = NOBLEND;
     }
     if ( secondHand == 20)  {
-      currentPalette = PartyColors_p;
+      currentPalette = RainbowStripeColors_p;
       currentBlending = LINEARBLEND;
     }
     if ( secondHand == 25)  {
-      currentPalette = PartyColors_p;
+      currentPalette = CloudColors_p;
       currentBlending = LINEARBLEND;
     }
     if ( secondHand == 30)  {
@@ -96,8 +98,8 @@ void ChangePalettePeriodically()
       currentBlending = LINEARBLEND;
     }
     if ( secondHand == 40)  {
-      currentPalette = CloudColors_p;
-      currentBlending = LINEARBLEND;
+      currentPalette = PartyColors_p;
+      currentBlending = NOBLEND;
     }
     if ( secondHand == 45)  {
       currentPalette = PartyColors_p;
