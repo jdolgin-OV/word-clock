@@ -1,7 +1,7 @@
 #ifndef _word_clock_H
 #define _word_clock_H
 
-
+//Include the color pallet animations
 #include "colorPallet.h"
 #include "scroll_text.h"
 
@@ -36,7 +36,6 @@ unsigned long time_since_last_wake = 0;
 unsigned long current_time = millis();
 #define SLEEP_TIME 7200000
 
-//array of LED indices for each word
 uint8_t it[] = {0, 1};
 uint8_t is[] = {3, 4};
 uint8_t five[] = {30, 33};
@@ -66,11 +65,9 @@ uint8_t twelve[] = {78, 83};
 uint8_t oclock[] = {126, 131};
 uint8_t in[] = {142, 143};
 
-//Width and height of number character for digital time mode
 #define NUM_WIDTH 4
 #define NUM_HEIGHT 5
 
-//nums[i] is an array of columns, where a 1 represents a light
 bool nums[10][NUM_WIDTH][NUM_HEIGHT] = {
   {{0, 1, 1, 1, 0}, {1, 0, 0, 0, 1}, {1, 0, 0, 0, 1}, {0, 1, 1, 1, 0}},
   {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {1, 1, 1, 1, 1}, {0, 0, 0, 0, 0}},
@@ -84,19 +81,16 @@ bool nums[10][NUM_WIDTH][NUM_HEIGHT] = {
   {{1, 1, 1, 0, 1}, {1, 0, 1, 0, 1}, {1, 0, 1, 0, 1}, {1, 1, 1, 1, 1}},
 };
 
-//boolean to store whether to show the dots with the time
 bool dot = false;
 
-//boolean array the size of the matrix that gets populated with number characters
 bool screen[mh][mw] = {0};
-
 //Show LED Rainbow animation
 void rainbow_show()
 {
   for (int i = 0; i < NUM_LEDS; i++)
   {
     //Create gradient hue
-    leds[i] = CHSV((hue + 1 * i) % 255, 255, brightness);
+    leds[i] = CHSV((hue + 5 * i) % 255, 255, brightness);
   }
   FastLED.show();
 }
@@ -117,7 +111,6 @@ void set_leds(uint8_t led_address[], CRGB color)
   }
 }
 
-
 //Get the current time
 void get_time()
 {
@@ -137,7 +130,6 @@ void get_time()
 void show_time()
 {
   CRGB color;
-  //If clock mode is 0, show user input color, else fade rainbow
   if (clock_mode == 0)
   {
     color = CRGB(red, green, blue);
@@ -154,26 +146,25 @@ void show_time()
   //12 hour time
   hour = hour % 12;
 
-  //always light "it is"
+  //Holds starting and ending address
+  uint8_t address[2] = {0, 1};
+
   set_leds(it, color);
   Serial.print("It ");
 
   set_leds(is, color);
   Serial.print("Is ");
 
-  //either 5 past or 5 to
   if ((minute >= 5 && minute < 10) || minute >= 55)
   {
     set_leds(five, color);
     Serial.print("Five ");
   }
-  //either 10 past or 10 to
   else if ((minute >= 10 && minute < 15) || minute >= 50)
   {
     set_leds(ten, color);
     Serial.print("Ten ");
   }
-  //either quarter past or quarter to
   else if ((minute >= 15 && minute < 20) || minute >= 45)
   {
     set_leds(a, color);
@@ -182,33 +173,28 @@ void show_time()
     set_leds(quarter, color);
     Serial.print("Quarter ");
   }
-  //either twenty past or twenty to
   else if ((minute >= 20 && minute < 25) || minute >= 40)
   {
     set_leds(twenty, color);
     Serial.print("Twenty ");
   }
-  //either twenty five past or twenty five to
   else if ((minute >= 25 && minute < 30) || minute >= 35)
   {
     set_leds(twenty, color);
     set_leds(five, color);
     Serial.print("Twenty Five ");
   }
-  //either half past or half to
   else if ((minute >= 30))
   {
     set_leds(half, color);
     Serial.print("Half ");
   }
 
-  //if less than 5 show O'clock
   if (minute < 5)
   {
     set_leds(oclock, color);
     Serial.print("O'Clock ");
   }
-  //half half past roll over to "to"
   else if (minute >= 35)
   {
     set_leds(to, color);
@@ -220,14 +206,12 @@ void show_time()
     Serial.print("Past ");
   }
 
-  //only show minutes when not saying o'clock, a quarter, half
   if ((minute >= 5 && minute < 15) || (minute >= 20 && minute < 30) || (minute >= 35 && minute < 45) || minute >= 50)
   {
     set_leds(minutes, color);
     Serial.print("Minutes ");
   }
 
-  //display the right hour
   switch (hour)
   {
     case 1:
@@ -280,11 +264,9 @@ void show_time()
       break;
   }
 
-  //always light in
   set_leds(in, color);
   Serial.print("in ");
 
-  //select time zone
   set_leds(time_zone_leds[time_zone_count], color);
   Serial.println(time_zone_names[time_zone_count]);
 }
@@ -355,20 +337,17 @@ void show_digital_time()
     FastLED.clear();
   }
 
-  //break 2 digit minute and hour into single digits
   uint8_t minute_ones = minute % 10;
   uint8_t minute_tens = minute / 10;
   uint8_t hour_ones = (hour % 12) % 10;
   uint8_t hour_tens = (hour % 12) / 10;
 
-  //if 00 show 12
   if (!hour_ones && !hour_tens)
   {
     hour_ones = 2;
     hour_tens = 1;
   }
 
-  //every 1 second update whether to show the dot
   EVERY_N_MILLISECONDS(1000)
   {
     dot = !dot;
@@ -388,7 +367,6 @@ void show_digital_time()
   {
     for (uint8_t y = 0; y < NUM_HEIGHT; y++)
     {
-      //show minute ones
       if (nums[minute_ones][x / LEDS_PER_COL][y])
       {
         matrix->drawPixel(x + ((NUM_WIDTH + 1) * LEDS_PER_COL), y + (mh - NUM_HEIGHT), CRGB(red, green, blue));
@@ -397,8 +375,6 @@ void show_digital_time()
       {
         matrix->drawPixel(x + ((NUM_WIDTH + 1) * LEDS_PER_COL), y + (mh - NUM_HEIGHT), CRGB(0, 0, 0));
       }
-
-      //show minute tens
       if (nums[minute_tens][x / 4][y])
       {
         matrix->drawPixel(x, y + (mh - NUM_HEIGHT), CRGB(red, green, blue));
@@ -407,8 +383,6 @@ void show_digital_time()
       {
         matrix->drawPixel(x, y + (mh - NUM_HEIGHT), CRGB(0, 0, 0));
       }
-
-      //show hour ones
       if (nums[hour_ones][x / LEDS_PER_COL][y])
       {
         matrix->drawPixel(x + ((NUM_WIDTH + 1) * LEDS_PER_COL), y, CRGB(red, green, blue));
@@ -417,8 +391,6 @@ void show_digital_time()
       {
         matrix->drawPixel(x + ((NUM_WIDTH + 1) * LEDS_PER_COL), y, CRGB(0, 0, 0));
       }
-
-      //show hour tens
       if (nums[hour_tens][x / 4][y])
       {
         matrix->drawPixel(x, y, CRGB(red, green, blue));
@@ -433,21 +405,15 @@ void show_digital_time()
   FastLED.show();
 }
 
-//frequency between strikes
-uint8_t frequency = random(1, 30);
-//speed at which rain falls
+uint8_t frequency = random(1, 30);                                       // controls the interval between strikes
 #define FALL_SPEED 200
 
-//32 bit integer color values
 const uint32_t RAIN = 0x006af5;
 const uint32_t CLOUD = 0x7F7F7F;
 const uint32_t LIGHTNING = 0xffee00;
 const uint32_t BLACK = 0x000000;
-
-//different lengths of lightning bolts
 uint8_t lightning_lengths[5] = {0, 4, 7, 10, 13};
 
-//array holding what is to be shown on screen
 uint32_t weather[mh][mw / LEDS_PER_COL] PROGMEM = {{BLACK, CLOUD, CLOUD, CLOUD, BLACK,  BLACK,  BLACK, BLACK, CLOUD, CLOUD, CLOUD, BLACK},
   {CLOUD, CLOUD, CLOUD, CLOUD, CLOUD,  BLACK,  BLACK, CLOUD, CLOUD, CLOUD, CLOUD, CLOUD},
   {BLACK, BLACK, BLACK, BLACK, BLACK,  BLACK,  BLACK, BLACK, BLACK, BLACK, BLACK, BLACK},
@@ -462,7 +428,6 @@ uint32_t weather[mh][mw / LEDS_PER_COL] PROGMEM = {{BLACK, CLOUD, CLOUD, CLOUD, 
   {BLACK, BLACK, BLACK, BLACK, BLACK,  BLACK,  BLACK, BLACK, BLACK, BLACK, BLACK, BLACK}
 };
 
-//clear the whole display except the clouds
 void clear_display()
 {
   for (uint8_t i = mh - 1; i >= 2; i--)
@@ -479,27 +444,27 @@ void show_lightning()
 {
   uint8_t ptr = random(0, 5);
   uint8_t right_length = lightning_lengths[ptr];
-
+  //  Serial.println("right ptr: ");
+  //  Serial.println(ptr);
+  //  Serial.println("length: ");
+  //  Serial.println(lightning_lengths[ptr]);
 
   ptr = random(0, 5);
   uint8_t left_length = lightning_lengths[ptr];
+  //  Serial.println("left ptr: ");
+  //  Serial.println(ptr);
 
-  //clear display to show lightning
   clear_display();
 
-  //right bolt x value starts at index 9
   uint8_t right_x = 9;
   int8_t right_sign = -1;
-  //decide whether to go left or right
   if (random(0, 2))
   {
     right_sign = 1;
   }
 
-  //left bolt starts at index 2
   uint8_t left_x = 2;
   int8_t left_sign = -1;
-  //decide whether to go left or right
   if (random(0, 2))
   {
     left_sign = 1;
@@ -508,13 +473,10 @@ void show_lightning()
   uint8_t curr_right_length = 0;
   uint8_t curr_left_length = 0;
 
-  //draw the lightning
   for (uint8_t y = 2; y < mh - 1; y++)
   {
     if (curr_right_length < right_length)
     {
-      //keep drawing
-      //every 2 down steps move left or right
       if (y % 2 == 1)
       {
         weather[y][right_x] = LIGHTNING;
@@ -526,7 +488,6 @@ void show_lightning()
         right_x += right_sign;
         right_sign *= -1;
       }
-      //else just go down
       else
       {
 
@@ -537,8 +498,6 @@ void show_lightning()
 
     if (curr_left_length < left_length)
     {
-      //keep drawing
-      //every 2 down steps move left or right
       if (y % 2 == 1)
       {
         weather[y][left_x] = LIGHTNING;
@@ -550,7 +509,6 @@ void show_lightning()
         left_x += left_sign;
         left_sign *= -1;
       }
-      //else just go down
       else
       {
         weather[y][left_x] = LIGHTNING;
@@ -558,16 +516,15 @@ void show_lightning()
       }
     }
   }
-  //show the lightning
+
   show_image(weather);
-  //delay for a random time before clearing
   delay(random(1, 8) * 100);
   clear_display();
   show_image(weather);
 }
 
 void weather_display() {
-  //every frequency num of seconds show lightning
+  // put your main code here, to run repeatedly:
   randomSeed(analogRead(3));
   EVERY_N_MILLISECONDS(1000 * frequency)
   {
@@ -576,12 +533,12 @@ void weather_display() {
     show_lightning();
   }
 
-  //every 2 times a drop falls add another
+
   EVERY_N_MILLISECONDS(2 * FALL_SPEED)
   {
     uint8_t col = 0;
     bool added = false;
-    //if there is a drop right below where one is added dont add it
+
     col = random(0, 5);
     if (weather[3][col] != RAIN)
     {
@@ -590,20 +547,18 @@ void weather_display() {
     }
 
     col = random(7, 12);
-    //if there is a drop right below where one is added dont add it
     if (weather[3][col] != RAIN)
     {
       weather[2][col] = RAIN;
       added = true;
     }
-    //if a drop was added
+
     if (added)
     {
       for (uint8_t i = mh - 1; i >= 3; i--)
       {
         for (uint8_t j = 0; j < mw / LEDS_PER_COL; j++)
         {
-          //move each drop down a col
           if (weather[i][j] == RAIN)
           {
             weather[i][j] = BLACK;
@@ -616,7 +571,6 @@ void weather_display() {
     }
   }
 
-  //then drop again
   for (uint8_t i = mh - 1; i >= 2; i--)
   {
     for (uint8_t j = 0; j < mw / LEDS_PER_COL; j++)
