@@ -224,12 +224,14 @@ void scroll_text(String message)
     //if lowercase or space change offset
     OFFSET = DIFF_LOWERCASE;
   }
+  //if lowercase m or w, the length is 1 longer
   else if (value == 77 || value == 87)
   {
     OFFSET = DIFF_LOWERCASE - 1;
   }
   else if (value == 76)
   {
+    //if lowercase l, the length is 1 shorter
     OFFSET = DIFF_LOWERCASE + 1;
   }
   else
