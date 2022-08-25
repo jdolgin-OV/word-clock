@@ -219,7 +219,7 @@ void scroll_text(String message)
   uint8_t value = message.charAt(pointer);
   value = value - 32;
   //adjust ascii value to array pointer
-  if (value == 0 || (value >= 65 && value <= 75) || (value >= 78 && value <= 86) || (value >= 88 && value <= 90))
+  if (value == 0 || (value >= 65 && value <= 75) || (value >= 78 && value <= 83) || (value >= 85 && value <= 86) || (value >= 88 && value <= 90))
   {
     //if lowercase or space change offset
     OFFSET = DIFF_LOWERCASE;
@@ -229,9 +229,9 @@ void scroll_text(String message)
   {
     OFFSET = DIFF_LOWERCASE - 1;
   }
-  else if (value == 76)
+  else if (value == 76 || value == 84)
   {
-    //if lowercase l, the length is 1 shorter
+    //if lowercase l or t, the length is 1 shorter
     OFFSET = DIFF_LOWERCASE + 1;
   }
   else
