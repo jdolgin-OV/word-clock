@@ -45,7 +45,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 </head>
 
 <body>
-  <h2>Omers WordClock</h2>
+  <h2>OMERS WordClock</h2>
   <button type="button" id="powerBtn" onclick="sendData('p',1)" >Power</button>
   <table>
       <tr>
@@ -159,9 +159,9 @@ uint8_t brightness = 200;
 unsigned long red = 247;
 unsigned long green = 200;
 unsigned long blue = 69;
-String text = "Welcome to OMERS Ventures";
+String text = "Welcome to OV";
 //String text = "!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVQXYZ[\]^_`abdefghijklmnopqrstuvwxyz{|}~";
-uint16_t scroll_speed = 250;
+uint16_t scroll_speed = 400;
 uint8_t pointer = 0;    //8 bit pointer to character in message
 
 //number of modes

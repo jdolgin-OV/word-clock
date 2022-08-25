@@ -18,10 +18,13 @@ DateTime now;
 int hue = 0;
 
 //Button/PIR pin definitions
-#define HOUR_BUTTON 33
-#define MINUTE_BUTTON 25
+#define HOUR_BUTTON 25
+#define MINUTE_BUTTON 33
 #define TIME_ZONE 26
 #define MODE_BUTTON 27
+
+//auto change every 30 sec
+#define AUTO_CHANGE_TIME 30000
 
 //Time zones
 #define NUM_TIME_ZONES 3
@@ -72,15 +75,8 @@ uint8_t in[] = {10, 11};
 #define NUM_HEIGHT 5
 
 //nums[i] is an array of columns, where a 1 represents a light
-/*
-the first 3 indeces are just fillers, for some reason when changing the time in digital mode 
-numbers 0, 1, 2 would be incorrect, moving the address fixed the issue. Maybe some sort of memory overlap?
 
- */
-bool nums[13][NUM_WIDTH][NUM_HEIGHT] = {
-  {{0, 1, 1, 1, 0}, {1, 0, 0, 0, 1}, {1, 0, 0, 0, 1}, {0, 1, 1, 1, 0}},
-  {{0, 1, 1, 1, 0}, {1, 0, 0, 0, 1}, {1, 0, 0, 0, 1}, {0, 1, 1, 1, 0}},
-  {{0, 1, 1, 1, 0}, {1, 0, 0, 0, 1}, {1, 0, 0, 0, 1}, {0, 1, 1, 1, 0}},
+bool nums[10][NUM_WIDTH][NUM_HEIGHT] = {
   {{0, 1, 1, 1, 0}, {1, 0, 0, 0, 1}, {1, 0, 0, 0, 1}, {0, 1, 1, 1, 0}},
   {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {1, 1, 1, 1, 1}, {0, 0, 0, 0, 0}},
   {{1, 0, 1, 1, 1}, {1, 0, 1, 0, 1}, {1, 0, 1, 0, 1}, {1, 1, 1, 0, 1}},
@@ -362,10 +358,10 @@ void show_digital_time()
 
 
   //break 2 digit minute and hour into single digits
-  uint8_t minute_ones = minute % 10 + 3;
-  uint8_t minute_tens = minute / 10 + 3;
-  uint8_t hour_ones = (hour % 12) % 10 + 3;
-  uint8_t hour_tens = (hour % 12) / 10 + 3;
+  uint8_t minute_ones = minute % 10;
+  uint8_t minute_tens = minute / 10;
+  uint8_t hour_ones = (hour % 12) % 10;
+  uint8_t hour_tens = (hour % 12) / 10;
 
   Serial.println(String(hour_tens) + String(hour_ones) + ":" + String(minute_tens) + String(minute_ones));
 

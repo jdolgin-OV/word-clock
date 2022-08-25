@@ -47,7 +47,7 @@ void loop()
   //if auto change, change modes every 10 seconds
   if (auto_change)
   {
-    EVERY_N_MILLISECONDS(10000)
+    EVERY_N_MILLISECONDS(AUTO_CHANGE_TIME)
     {
       update_mode();
     }

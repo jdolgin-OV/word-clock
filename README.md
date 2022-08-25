@@ -5,7 +5,6 @@ Materials:
 ESP32 Wroom Module Breakout
 4x at42qt1010 capacitive touch breakouts 
 1x DS3231 RTC breakout
-1x PIR motion sensor
 576 WS2812 LEDs at 60 LEDs/m
 
 Libraries:
@@ -34,3 +33,6 @@ wifi_setup.h - adapted from scott marleys ESP32 Graphic equalizer https://github
 word_clock.h - all necessary word clock functions
 
 Word_Clock.ino - Arduino file to brig everything together
+
+See Word Clock PDF for images of build and user guide.
+
