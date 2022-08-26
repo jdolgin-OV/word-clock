@@ -7,7 +7,7 @@
 #include <FastLED.h>
 #define NUM_ATTEMPTS 5
 
-const char* ssid ="";
+const char* ssid = "";
 const char* password = "";
 
 // Replace with your secondary network credentials

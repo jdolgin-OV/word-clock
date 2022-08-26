@@ -76,6 +76,7 @@ void loop()
     while (!power)
     {
       current_time = millis();
+      get_time();
       if (digitalRead(HOUR_BUTTON) && digitalRead(TIME_ZONE))
       {
         power = true;
